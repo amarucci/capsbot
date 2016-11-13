@@ -1,8 +1,16 @@
 class Game(object):
-    score1 = 0
-    score2 = 0
-    name1 = "Team 1"
-    name2 = "Team 2"
+    def __init__(self, name1, name2):
+        self.team1 = name1
+        self.team2 = name2
+        self.score1 = 0
+        self.score2 = 0
 
-    def getscore():
-        return "%s: %s \n %s: %s"(name1, score1, name2, score2)
+    def get_score(self):
+        return self.score1, self.score2
+
+    def get_names(self):
+        return self.team1, self.team2
+
+    def update_score(self, x, y):
+        self.score1 += x
+        self.score2 += y
