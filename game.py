@@ -8,6 +8,9 @@ class Game(object):
     def get_score(self):
         return self.scores[0] + self.scores[1], self.scores[2] + self.scores[3]
 
+    def get_individual_scores(self):
+        return self.scores
+
     def get_names(self):
         return self.players
 

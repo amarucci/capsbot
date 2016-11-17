@@ -22,9 +22,9 @@ def send_welcome(message):
         bot.send_message(message.chat.id, 'Error, need exactly four players')
         return
 
-    markup = create_markup(names)
-
     new_game = Game(names)
+
+    markup = create_markup(new_game)
 
     sent_message = bot.send_message(message.chat.id, 'How to use: Press the team\'s button when they score!!\n'+
             get_score_text(new_game), reply_markup=markup)
@@ -53,7 +53,7 @@ def update_score(callback):
         game.update_score(callback.data)
 
         #get the markup
-        markup = create_markup(game.get_names())
+        markup = create_markup(game)
 
         bot.edit_message_text(chat_id=callback.message.chat.id,message_id=id,
                 text=get_score_text(game),reply_markup=markup)
@@ -78,16 +78,19 @@ def end_game(message):
     bot.send_message(message.chat.id, 'THAT\'S CAPS ')
 
 #helper functions :)
-def create_markup(names):
+def create_markup(game):
+    names = game.get_names()
+    scores = game.get_individual_scores()
+
     markup = types.InlineKeyboardMarkup()
 
-    itembtn1 = types.InlineKeyboardButton(names[0], callback_data=names[0])
-    itembtn2 = types.InlineKeyboardButton(names[1], callback_data=names[1])
-    markup.row(itembtn1,itembtn2)
+    itembtn0 = types.InlineKeyboardButton("%s: %d"%(names[0], scores[0]), callback_data=names[0])
+    itembtn1 = types.InlineKeyboardButton("%s: %d"%(names[1], scores[1]), callback_data=names[1])
+    markup.row(itembtn0,itembtn1)
 
-    itembtn3 = types.InlineKeyboardButton(names[2], callback_data=names[2])
-    itembtn4 = types.InlineKeyboardButton(names[3], callback_data=names[3])
-    markup.row(itembtn3,itembtn4)
+    itembtn2 = types.InlineKeyboardButton("%s: %d"%(names[2], scores[2]), callback_data=names[2])
+    itembtn3 = types.InlineKeyboardButton("%s: %d"%(names[3], scores[3]), callback_data=names[3])
+    markup.row(itembtn2,itembtn3)
 
     itemend = types.InlineKeyboardButton('End Game', callback_data='end')
     markup.row(itemend)
