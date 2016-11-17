@@ -1,5 +1,4 @@
 import telebot
-import emoji
 from telebot import types
 from secret_vars import *
 from game import Game
@@ -17,21 +16,55 @@ games = {} #the games dictionary
 #finally, add the game to the games dict using the message id to keep track
 @bot.message_handler(commands=['newgame'])
 def send_welcome(message):
-    try:
-        command,team1,team2 = message.text.split() 
-    except ValueError:
-        team1 = 'team1'
-        team2 = 'team2'
+    names = [x[1:] for x in message.text.split() if '@' in x]
 
-    markup = create_markup(team1,team2)
+    if(len(names) != 4):
+        bot.send_message(message.chat.id, 'Error, need exactly four players')
+        return
 
-    new_game = Game(team1,team2)
+    markup = create_markup(names)
+
+    new_game = Game(names)
 
     sent_message = bot.send_message(message.chat.id, 'How to use: Press the team\'s button when they score!!\n'+
-            team1 +': 0\n' + team2 +': 0', reply_markup=markup)
+            get_score_text(new_game), reply_markup=markup)
     id = sent_message.message_id
 
     games.update({id:new_game})
+
+@bot.callback_query_handler(func=lambda call: True)
+def update_score(callback):
+    #validate the person pressing a button is allowed to
+    bot.send_message(callback.message.chat.id, callback.from_user)
+    #check if end button was pressed
+    if callback.data =='end':
+        end_game(callback.message)
+        return
+
+    try:
+        #get the game the current message is referencing
+        id = callback.message.message_id
+        game = games[id]
+
+        #update the score
+        game.update_score(callback.data)
+
+        #get the markup
+        markup = create_markup(game.get_names())
+
+        bot.edit_message_text(chat_id=callback.message.chat.id,message_id=id,
+                text=get_score_text(game),reply_markup=markup)
+    except KeyError:
+        print('oh well')
+
+#to end the game without recording stats
+@bot.message_handler(commands=['endnostats'])
+def end_game_no_stats(message):
+    try:
+        del games[message.message_id]
+    except KeyError:
+        return
+    bot.send_message(message.chat.id, 'No stats recorded')
 
 @bot.message_handler(commands=['endgame'])
 def end_game(message):
@@ -41,39 +74,31 @@ def end_game(message):
         return
     bot.send_message(message.chat.id, 'THAT\'S CAPS ')
 
-@bot.callback_query_handler(func=lambda call: True)
-def update_score(callback):
-    if callback.data =='end':
-        end_game(callback.message)
-        return
-
-    #the end button was not pressed
-    try:
-        id = callback.message.message_id
-        game = games[id]
-
-        if callback.data == '1':
-            game.update_score(1,0)
-        else:
-            game.update_score(0,1)
-
-        team1, team2 = game.get_names()
-        score1, score2 = game.get_score()
-        update_text = '%s: %d\n%s: %d' % (team1, score1, team2, score2)
-        markup = create_markup(team1, team2)
-        bot.edit_message_text(chat_id=callback.message.chat.id,message_id=id,text=update_text,reply_markup=markup)
-    except KeyError:
-        print('oh well')
-
 #helper functions :)
-def create_markup(name1, name2):
+def create_markup(names):
     markup = types.InlineKeyboardMarkup()
-    itembtn1 = types.InlineKeyboardButton(name1, callback_data='1')
-    itembtn2 = types.InlineKeyboardButton(name2, callback_data='2')
-    itemend = types.InlineKeyboardButton('End Game', callback_data='end')
+
+    itembtn1 = types.InlineKeyboardButton(names[0], callback_data=names[0])
+    itembtn2 = types.InlineKeyboardButton(names[1], callback_data=names[1])
     markup.row(itembtn1,itembtn2)
+
+    itembtn3 = types.InlineKeyboardButton(names[2], callback_data=names[2])
+    itembtn4 = types.InlineKeyboardButton(names[3], callback_data=names[3])
+    markup.row(itembtn3,itembtn4)
+
+    itemend = types.InlineKeyboardButton('End Game', callback_data='end')
     markup.row(itemend)
 
     return markup
+
+def get_score_text(game):
+    #get the team names and score
+    team1, team2 = game.get_teams()
+    score1, score2 = game.get_score()
+
+    #update the message 
+    update_text = '%s: %d\n%s: %d' % (team1, score1, team2, score2)
+
+    return update_text
 
 bot.polling()
