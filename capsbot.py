@@ -34,8 +34,6 @@ def send_welcome(message):
 
 @bot.callback_query_handler(func=lambda call: True)
 def update_score(callback):
-    #validate the person pressing a button is allowed to
-    bot.send_message(callback.message.chat.id, callback.from_user)
     #check if end button was pressed
     if callback.data =='end':
         end_game(callback.message)
@@ -45,6 +43,11 @@ def update_score(callback):
         #get the game the current message is referencing
         id = callback.message.message_id
         game = games[id]
+
+        #validate the person pressing a button is allowed to
+        if not callback.from_user.username in game.get_names():
+            print(callback.from_user.username)
+            return
 
         #update the score
         game.update_score(callback.data)
