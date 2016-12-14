@@ -22,7 +22,7 @@ def send_welcome(message):
         bot.send_message(message.chat.id, 'Error, need exactly four players')
         return
 
-    new_game = Game(names, message.from_user)
+    new_game = Game(names, message.from_user.username)
 
     markup = create_markup(new_game)
 
@@ -71,7 +71,7 @@ def update_score(callback):
         game = games[game_id]
 
         #validate the person pressing a button is allowed to
-        if not callback.from_user.username in game.get_owner():
+        if not callback.from_user.username == game.get_owner():
             print(callback.from_user.username)
             return
 
