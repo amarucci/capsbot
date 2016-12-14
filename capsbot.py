@@ -72,10 +72,14 @@ def end_game_no_stats(message):
 @bot.message_handler(commands=['endgame'])
 def end_game(message):
     try:
+        score = games[message.message_id].get_score()
+        teams = games[message.message_id].get_teams()
+        bot.send_message(message.chat.id, 'Final Score: %s: %d  %s: %d\n'%
+                (teams[0],score[0],teams[1],score[1]) + 'THAT\'S CAPS ')
+
         del games[message.message_id]
     except KeyError:
         return
-    bot.send_message(message.chat.id, 'THAT\'S CAPS ')
 
 #helper functions :)
 def create_markup(game):
