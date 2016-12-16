@@ -16,28 +16,36 @@ games = {} #the games dictionary
 #finally, add the game to the games dict using the message id to keep track
 @bot.message_handler(commands=['newgame'])
 def send_welcome(message):
-    names = [x[1:] for x in message.text.split() if '@' in x]
+    forbidden_names = ['caps_control_bot', 'end', 'deuces']
+    names = [x[1:] for x in message.text.split() if '@' in x and not any(y in x for y in forbidden_names)]
 
     if(len(names) != 4):
         bot.send_message(message.chat.id, 'Error, need exactly four players')
         return
 
-    new_game = Game(names, message.from_user.username, message.message_id)
+    new_game = Game(names, message.from_user.username, message.chat.id)
 
     markup = create_markup(new_game)
 
     sent_message = bot.send_message(
             message.chat.id, 
-            'Game ID: '+sent_message.message_id+'\n'+
+            text='Game ID: '+str(message.message_id + 1)+'\n'+
             get_score_text(new_game), reply_markup=markup)
+
+    new_game.set_game_id(sent_message.message_id)
 
     games.update({sent_message.message_id:new_game})
 
 @bot.message_handler(commands=['deuces'])
 def deuces(message):
+    game_id = message.text.split()[1]
+
     try:
-        game = games[message.text]
-        game.set_deuces()
+        game = games[int(game_id)]
+        if game.set_deuces():
+            update_message(game)
+            deuced(game)
+
     except KeyError:
         bot.send_message(
                 message.chat.id,
@@ -47,45 +55,55 @@ def deuces(message):
 def handle_callback(callback):
     try:
         #get the game the current message is referencing
-        game_id = callback.message.message_id
-        game = games[game_id]
+        game = games[callback.message.message_id]
     except KeyError:
         print('oh well')
         return
 
     #validate the person pressing a button is allowed to
     if not callback.from_user.username == game.get_owner():
-        print(callback.from_user.username)
+        print(callback.from_user.username + ": " + callback.data)
         return
 
     #check if end button was pressed
     if callback.data =='end':
         end_game(game)
         return
+    elif callback.data=='deuces_button':
+        deuced(game)
     else:
         update_score(game, callback.data)
 
 #helper functions :)
-def update_score(game, scorer):
-    #update the score
-    game.update_score(scorer)
+def deuced(game):
+    if game.deuced():
+        update_message(game)
 
+def update_message(game):
     #get the markup
     markup = create_markup(game)
 
     bot.edit_message_text(
-            chat_id=callback.message.chat.id,message_id=game_id,
-            text='Game ID: '+sent_message.message_id+'\n'+
+            chat_id=game.get_chat_id(),message_id=game.get_game_id(),
+            text='Game ID: '+str(game.get_game_id())+'\n'+
             get_score_text(game),reply_markup=markup)
+
+def update_score(game, scorer):
+    #update the score
+    game.update_score(scorer)
+
+    #update the message
+    update_message(game)
+
 
 def end_game(game):
     try:
         score = game.get_score()
-        teams = games.get_teams()
-        bot.send_message(game.get_id(), 'Final Score: %s: %d  %s: %d\n'%
-                (teams[0],score[0],teams[1],score[1]) + 'THAT\'S CAPS ')
+        teams = game.get_teams()
+        bot.send_message(game.get_chat_id(), 'Final Score: %s: %d  %s: %d\n'%
+                (teams[0],score[0],teams[1],score[1]) + u'THAT\'S CAPS \U0001f44f \U0001f44f \U0001f44f')
 
-        del games[game.get_id()]
+        del games[game.get_game_id()]
     except KeyError:
         return
 
@@ -108,8 +126,8 @@ def create_markup(game):
     markup.row(itembtn2,itembtn3)
 
     itemend = types.InlineKeyboardButton('End Game', callback_data='end')
-    if game.deuces():
-        itemdeuces = types.InlineKeyboardButton('Deuces!!!!', callback_data='end')
+    if game.get_deuces():
+        itemdeuces = types.InlineKeyboardButton('Deuces!!!!', callback_data='deuces_button')
         markup.row(itemdeuces,itemend)
     else:
         markup.row(itemend)
