@@ -22,70 +22,72 @@ def send_welcome(message):
         bot.send_message(message.chat.id, 'Error, need exactly four players')
         return
 
-    new_game = Game(names, message.from_user.username)
+    new_game = Game(names, message.from_user.username, message.message_id)
 
     markup = create_markup(new_game)
 
     sent_message = bot.send_message(
             message.chat.id, 
-            'How to use: Press the team\'s button when they score!!\n'+
+            'Game ID: '+sent_message.message_id+'\n'+
             get_score_text(new_game), reply_markup=markup)
 
     games.update({sent_message.message_id:new_game})
 
+@bot.message_handler(commands=['deuces'])
+def deuces(message):
+    try:
+        game = games[message.text]
+        game.set_deuces()
+    except KeyError:
+        bot.send_message(
+                message.chat.id,
+                'Wrong ID or something idk. How did you fuck this up?')
+
 @bot.callback_query_handler(func=lambda call: True)
 def handle_callback(callback):
-    #check if end button was pressed
-    if callback.data =='end':
-        end_game(callback.message)
-        return
-    else:
-        update_score(callback)
-
-#to end the game without recording stats
-@bot.message_handler(commands=['endnostats'])
-def end_game_no_stats(message):
-    try:
-        del games[message.message_id]
-    except KeyError:
-        return
-    bot.send_message(message.chat.id, 'No stats recorded')
-
-@bot.message_handler(commands=['endgame'])
-def end_game(message):
-    try:
-        score = games[message.message_id].get_score()
-        teams = games[message.message_id].get_teams()
-        bot.send_message(message.chat.id, 'Final Score: %s: %d  %s: %d\n'%
-                (teams[0],score[0],teams[1],score[1]) + 'THAT\'S CAPS ')
-
-        del games[message.message_id]
-    except KeyError:
-        return
-
-#helper functions :)
-def update_score(callback):
     try:
         #get the game the current message is referencing
         game_id = callback.message.message_id
         game = games[game_id]
-
-        #validate the person pressing a button is allowed to
-        if not callback.from_user.username == game.get_owner():
-            print(callback.from_user.username)
-            return
-
-        #update the score
-        game.update_score(callback.data)
-
-        #get the markup
-        markup = create_markup(game)
-
-        bot.edit_message_text(
-                chat_id=callback.message.chat.id,message_id=game_id,
-                text=get_score_text(game),reply_markup=markup)
     except KeyError:
         print('oh well')
+        return
+
+    #validate the person pressing a button is allowed to
+    if not callback.from_user.username == game.get_owner():
+        print(callback.from_user.username)
+        return
+
+    #check if end button was pressed
+    if callback.data =='end':
+        end_game(game)
+        return
+    else:
+        update_score(game, callback.data)
+
+#helper functions :)
+def update_score(game, scorer):
+    #update the score
+    game.update_score(scorer)
+
+    #get the markup
+    markup = create_markup(game)
+
+    bot.edit_message_text(
+            chat_id=callback.message.chat.id,message_id=game_id,
+            text='Game ID: '+sent_message.message_id+'\n'+
+            get_score_text(game),reply_markup=markup)
+
+def end_game(game):
+    try:
+        score = game.get_score()
+        teams = games.get_teams()
+        bot.send_message(game.get_id(), 'Final Score: %s: %d  %s: %d\n'%
+                (teams[0],score[0],teams[1],score[1]) + 'THAT\'S CAPS ')
+
+        del games[game.get_id()]
+    except KeyError:
+        return
 
 def create_markup(game):
     names = game.get_names()
@@ -106,7 +108,11 @@ def create_markup(game):
     markup.row(itembtn2,itembtn3)
 
     itemend = types.InlineKeyboardButton('End Game', callback_data='end')
-    markup.row(itemend)
+    if game.deuces():
+        itemdeuces = types.InlineKeyboardButton('Deuces!!!!', callback_data='end')
+        markup.row(itemdeuces,itemend)
+    else:
+        markup.row(itemend)
 
     return markup
 
