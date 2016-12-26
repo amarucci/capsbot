@@ -57,12 +57,12 @@ def handle_callback(callback):
         #get the game the current message is referencing
         game = games[callback.message.message_id]
     except KeyError:
-        print('oh well')
+        print('Game Does Not Exist: ' + callback.message.message_id)
         return
 
     #validate the person pressing a button is allowed to
     if not callback.from_user.username == game.get_owner():
-        print(callback.from_user.username + ": " + callback.data)
+        print('Illegal user: ' + callback.from_user.username + ': ' + callback.data)
         return
 
     #check if end button was pressed
@@ -114,15 +114,15 @@ def create_markup(game):
     markup = types.InlineKeyboardMarkup()
 
     itembtn0 = types.InlineKeyboardButton(
-            "%s: %d"%(names[0], scores[0]), callback_data=names[0])
+            '%s: %d'%(names[0], scores[0]), callback_data=names[0])
     itembtn1 = types.InlineKeyboardButton(
-            "%s: %d"%(names[1], scores[1]), callback_data=names[1])
+            '%s: %d'%(names[1], scores[1]), callback_data=names[1])
     markup.row(itembtn0,itembtn1)
 
     itembtn2 = types.InlineKeyboardButton(
-            "%s: %d"%(names[2], scores[2]), callback_data=names[2])
+            '%s: %d'%(names[2], scores[2]), callback_data=names[2])
     itembtn3 = types.InlineKeyboardButton(
-            "%s: %d"%(names[3], scores[3]), callback_data=names[3])
+            '%s: %d'%(names[3], scores[3]), callback_data=names[3])
     markup.row(itembtn2,itembtn3)
 
     itemend = types.InlineKeyboardButton('End Game', callback_data='end')
