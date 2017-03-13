@@ -55,12 +55,16 @@ def deuces(message):
 
 @bot.message_handler(commands=['neweuph'])
 def neweuph(message):
+    if(message.text == "/neweuph"):
+        return
+
     nounf = open('noun', 'w')
     verbf = open('verb', 'w')
 
     split = re.findall('\([\w|\ ]+\)',message.text)
-    noun = split[0][1:len(split[0]-1)]
-    verb = split[1][1:len(split[0]-1)]
+    print(split[0])
+    noun = split[0][1:len(split[0])-1]
+    verb = split[1][1:len(split[1])-1]
 
     nounf.write(noun + '\n')
     verbf.write(verb + '\n')
@@ -70,14 +74,16 @@ def neweuph(message):
 
 @bot.message_handler(commands=['ask2play'])
 def ask2play(message):
+    asks = open('ask','r').read().splitlines()
     nouns = open('noun','r').read().splitlines()
     verbs = open('verb','r').read().splitlines()
 
+    ask = random.choice(ask)
     noun = random.choice(nouns)
     verb = random.choice(verbs)
 
     bot.send_message(message.chat.id, 
-            'who wants to ' + verb +' the ' + noun + '?')
+            ask + verb +' the ' + noun + '?')
 
 @bot.callback_query_handler(func=lambda call: True)
 def handle_callback(callback):
@@ -174,7 +180,6 @@ def get_score_text(game):
 
 while True:
     try:
-
         bot.polling()
     except:
-        print("crash on bot.polling()")
+        print('error in bot.polling')
