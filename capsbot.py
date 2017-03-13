@@ -57,7 +57,7 @@ def handle_callback(callback):
         #get the game the current message is referencing
         game = games[callback.message.message_id]
     except KeyError:
-        print('Game Does Not Exist: ' + callback.message.message_id)
+        print('Game Does Not Exist: ' + string(callback.message.message_id))
         return
 
     #validate the person pressing a button is allowed to
@@ -144,4 +144,9 @@ def get_score_text(game):
 
     return update_text
 
-bot.polling()
+while True:
+    try:
+
+        bot.polling()
+    except:
+        print("crash on bot.polling()")
