@@ -1,4 +1,6 @@
 import telebot
+import re
+import random
 from telebot import types
 from secret_vars import *
 from game import Game
@@ -50,6 +52,32 @@ def deuces(message):
         bot.send_message(
                 message.chat.id,
                 'Wrong ID or something idk. How did you fuck this up?')
+
+@bot.message_handler(commands=['neweuph'])
+def neweuph(message):
+    nounf = open('noun', 'w')
+    verbf = open('verb', 'w')
+
+    split = re.findall('\([\w|\ ]+\)',message.text)
+    noun = split[0][1:len(split[0]-1)]
+    verb = split[1][1:len(split[0]-1)]
+
+    nounf.write(noun + '\n')
+    verbf.write(verb + '\n')
+
+    nounf.close()
+    verbf.close()
+
+@bot.message_handler(commands=['ask2play'])
+def ask2play(message):
+    nouns = open('noun','r').read().splitlines()
+    verbs = open('verb','r').read().splitlines()
+
+    noun = random.choice(nouns)
+    verb = random.choice(verbs)
+
+    bot.send_message(message.chat.id, 
+            'who wants to ' + verb +' the ' + noun + '?')
 
 @bot.callback_query_handler(func=lambda call: True)
 def handle_callback(callback):
