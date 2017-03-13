@@ -55,22 +55,21 @@ def deuces(message):
 
 @bot.message_handler(commands=['neweuph'])
 def neweuph(message):
-    if(message.text == "/neweuph"):
+    if(message.text == '/neweuph' or message.text == '/neweuph@caps_control_bot'):
         return
 
-    nounf = open('noun', 'w')
-    verbf = open('verb', 'w')
+    verbf = open('verb', 'a')
+    nounf = open('noun', 'a')
 
     split = re.findall('\([\w|\ ]+\)',message.text)
-    print(split[0])
-    noun = split[0][1:len(split[0])-1]
-    verb = split[1][1:len(split[1])-1]
+    verb = split[0][1:len(split[0])-1]
+    noun = split[1][1:len(split[1])-1]
 
-    nounf.write(noun + '\n')
     verbf.write(verb + '\n')
+    nounf.write(noun + '\n')
 
-    nounf.close()
     verbf.close()
+    nounf.close()
 
 @bot.message_handler(commands=['ask2play'])
 def ask2play(message):
@@ -78,12 +77,12 @@ def ask2play(message):
     nouns = open('noun','r').read().splitlines()
     verbs = open('verb','r').read().splitlines()
 
-    ask = random.choice(ask)
+    ask = random.choice(asks)
     noun = random.choice(nouns)
     verb = random.choice(verbs)
 
     bot.send_message(message.chat.id, 
-            ask + verb +' the ' + noun + '?')
+            ask + ' ' + verb +' the ' + noun + '?')
 
 @bot.callback_query_handler(func=lambda call: True)
 def handle_callback(callback):
@@ -179,7 +178,4 @@ def get_score_text(game):
     return update_text
 
 while True:
-    try:
-        bot.polling()
-    except:
-        print('error in bot.polling')
+    bot.polling()
