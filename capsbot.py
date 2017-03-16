@@ -1,5 +1,6 @@
 import telebot
 import re
+import os
 import random
 from telebot import types
 from secret_vars import *
@@ -58,8 +59,8 @@ def neweuph(message):
     if(message.text == '/neweuph' or message.text == '/neweuph@caps_control_bot'):
         return
 
-    verbf = open('verb', 'a')
-    nounf = open('noun', 'a')
+    verbf = open('/home/capsbot/capsbot/verb', 'a')
+    nounf = open('/home/capsbot/capsbot/noun', 'a')
 
     split = re.findall('\([\w|\ ]+\)',message.text)
     verb = split[0][1:len(split[0])-1]
@@ -73,9 +74,9 @@ def neweuph(message):
 
 @bot.message_handler(commands=['ask2play'])
 def ask2play(message):
-    asks = open('ask','r').read().splitlines()
-    nouns = open('noun','r').read().splitlines()
-    verbs = open('verb','r').read().splitlines()
+    asks = open('/home/capsbot/capsbot/ask','r').read().splitlines()
+    nouns = open('/home/capsbot/capsbot/noun','r').read().splitlines()
+    verbs = open('/home/capsbot/capsbot/verb','r').read().splitlines()
 
     ask = random.choice(asks)
     noun = random.choice(nouns)
@@ -178,4 +179,7 @@ def get_score_text(game):
     return update_text
 
 while True:
-    bot.polling()
+    try:
+        bot.polling()
+    except:
+        print('error on bot.polling')
