@@ -85,7 +85,7 @@ def ask2play(message):
     bot.send_message(message.chat.id, 
             ask + ' ' + verb +' the ' + noun + '?')
 
-@bot.callback_query_handler(func=lambda call: True)
+@bot.callback_query_handler(func=lambda call:True)
 def handle_callback(callback):
     try:
         #get the game the current message is referencing
